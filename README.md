@@ -16,4 +16,7 @@ Widgets in the template:
 4. Boxes
 5. Infoboxes
 6. Text
+  a. UI generated
+  b. Server generated
+  c. HTML
 7. Leaflet
