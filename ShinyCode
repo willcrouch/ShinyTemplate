@@ -1,0 +1,90 @@
+#
+#Sample test app, shiny dashboard with leaflet and dashboard
+#
+
+library(shiny)
+library(shinydashboard)
+library(leaflet)
+
+#Tasks Statuses, could be populated in global
+TaskStatus = list(90,20,60)
+
+#### UI ####
+ui = dashboardPage(
+  dashboardHeader(
+    title = "Basic Dashboard",
+    dropdownMenuOutput("MessageMenu"),
+    dropdownMenu(type = "tasks",
+                 taskItem(value = TaskStatus[1], color = "green", "Project Website"),
+                 taskItem(value = TaskStatus[2], color = "red", "Project Content"),
+                 taskItem(value = TaskStatus[3], color = "yellow", "Project Overall")
+                 )
+  ),
+  dashboardSidebar(
+    sidebarMenu( #Make sure ot have sidebarMenu to part with tabItems in the body for interactive tabs
+    menuItemOutput("MenuItemOne"),
+    menuItemOutput("MenuItemTwo")
+    )
+  ),
+  dashboardBody(
+    tabItems(
+      tabItem(tabName = "Dashboard",
+              h2("Dashboard tab content"),
+              infoBox("Data", 12, width = 4),
+              infoBox("More data", 12, width = 4),
+              infoBox("Example with color", 12, width = 4, color = "green")
+      ),
+      
+      tabItem(tabName = "Object",
+              h2("Maps & Boxes"),
+              fluidRow(
+                box(textOutput("textBox"), width = 3),
+                box(paste("Text created in the UI"), width = 3),
+                box(paste("The width of a row in a Shiny Dashboard is 12, so this can be split up into chunks
+                          adding up to 12 or less.  In this case, the boxes are a 3, a 3, and a 6."), width = 6)
+              ),
+              leafletOutput("map")
+              
+      )
+    )
+  )
+)
+
+#### Server ####
+server <- function(input, output) {
+  
+  #Messages text generation -- you need a df that is two columns with from and message
+  MessageData = data.frame("from" = character(1), "message" = Sys.Date())
+  MessageData$from = "Automated Date Messsage"
+  #Generates menu, using above data that could be created
+  output$MessageMenu <- renderMenu({
+    msgs <- apply(MessageData, 1, function(row) {
+      messageItem(from = row[["from"]], message = row[["message"]])
+    })
+    dropdownMenu(type = "messages", .list = msgs)
+  })
+  
+  #generate sidebar content, tabs for dashboard and code
+  output$MenuItemOne <- renderMenu({
+    menuItem("Dashboard", icon = icon("dashboard"), tabName = "Dashboard")
+  })
+  output$MenuItemTwo <- renderMenu({
+    menuItem("Map & Boxes", icon = icon("book-open"), tabName = "Object")
+  })
+  
+  #Generate leaflet map for other non-standard item
+  output$map = renderLeaflet(
+    leaflet() %>%
+      addTiles() %>% #OpenStreetMap is default
+      addMarkers(lng=174.768, lat=-36.852, popup="The birthplace of R") #Example point from leaflet's git
+      #https://rstudio.github.io/leaflet/
+  )
+  
+  output$textBox = renderText(
+    paste("Text created in the server")
+  )
+  
+}
+# Run the application 
+shinyApp(ui = ui, server = server)
+
